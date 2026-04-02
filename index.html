@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sauna Breath - Interactive Breathing Exercises</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@200;300;400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --wood-dark: #3d2b1f;
+            --wood-medium: #5c3d2e;
+            --wood-light: #8b6914;
+            --warm-gold: #d4a843;
+            --warm-amber: #e8b923;
+            --steam-white: rgba(255, 255, 255, 0.15);
+            --stone-dark: #2a1f1a;
+            --stone-medium: #4a3728;
+            --copper: #b87333;
+            --ember: #ff6b35;
+            --glow: rgba(255, 150, 50, 0.3);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #1a0e08 0%, #2a1a10 25%, #1f1208 50%, #2d1f15 75%, #1a0e08 100%);
+            min-height: 100vh;
+            color: #e8d5b5;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Wood grain texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(139, 105, 20, 0.03) 2px,
+                    rgba(139, 105, 20, 0.03) 4px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(92, 61, 46, 0.05) 20px,
+                    rgba(92, 61, 46, 0.05) 21px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Steam particles */
+        .steam-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .steam {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%);
+            animation: steamRise linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes steamRise {
+            0% {
+                transform: translateY(100vh) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-100px) scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--warm-gold);
+            text-shadow: 0 0 40px rgba(212, 168, 67, 0.3), 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-style: italic;
+            color: rgba(232, 213, 181, 0.6);
+            letter-spacing: 0.2em;
+        }
+
+        /* Sauna stones decoration */
+        .sauna-stones {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stone {
+            width: 40px;
+            height: 25px;
+            background: linear-gradient(180deg, #5a4a3a 0%, #3a2a1a 100%);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: 
+                inset 0 -3px 6px rgba(0,0,0,0.5),
+                inset 0 2px 4px rgba(255,255,255,0.1),
+                0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .stone:nth-child(1) { width: 50px; height: 30px; transform: rotate(-5deg); }
+        .stone:nth-child(2) { width: 45px; height: 28px; transform: rotate(3deg); }
+        .stone:nth-child(3) { width: 55px; height: 32px; transform: rotate(-2deg); }
+        .stone:nth-child(4) { width: 42px; height: 26px; transform: rotate(4deg); }
+        .stone:nth-child(5) { width: 48px; height: 29px; transform: rotate(-3deg); }
+
+        /* Main container */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Exercise selector */
+        .exercise-selector {
+            background: linear-gradient(135deg, rgba(42, 31, 26, 0.9), rgba(74, 55, 40, 0.9));
+            border: 1px solid rgba(184, 115, 51, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .exercise-selector h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: var(--warm-gold);
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: 0.15em;
+            font-weight: 400;
+        }
+
+        .shape-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .shape-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(184, 115, 51, 0.2);
+            border-radius: 30px;
+            color: rgba(232, 213, 181, 0.6);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+        }
+
+        .shape-tab:hover {
+            border-color: var(--warm-gold);
+            color: var(--warm-gold);
+            background: rgba(212, 168, 67, 0.1);
+        }
+
+        .shape-tab.active {
+            border-color: var(--warm-gold);
+            color: var(--warm-gold);
+            background: rgba(212, 168, 67, 0.15);
+            box-shadow: 0 0 20px rgba(212, 168, 67, 0.1);
+        }
+
+        .shape-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .exercises-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .exercise-card {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(184, 115, 51, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .exercise-card:hover {
+            border-color: var(--warm-gold);
+            background: rgba(212, 168, 67, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .exercise-card.active {
+            border-color: var(--warm-amber);
+            background: rgba(232, 185, 35, 0.12);
+            box-shadow: 0 0 25px rgba(232, 185, 35, 0.15);
+        }
+
+        .exercise-card .name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            color: var(--warm-gold);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .exercise-card .pattern {
+            font-size: 0.75rem;
+            color: rgba(232, 213, 181, 0.5);
+            letter-spacing: 0.05em;
+        }
+
+        /* Breathing area */
+        .breathing-area {
+            background: linear-gradient(135deg, rgba(42, 31, 26, 0.95), rgba(74, 55, 40, 0.95));
+            border: 1px solid rgba(184, 115, 51, 0.3);
+            border-radius: 20px;
+            padding: 40px 24px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 420px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .breathing-shape-container {
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        /* Circle breathing */
+        .breathing-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(255, 180, 80, 0.4), rgba(184, 115, 51, 0.2));
+            border: 2px solid rgba(212, 168, 67, 0.4);
+            box-shadow: 
+                0 0 40px rgba(212, 168, 67, 0.2),
+                inset 0 0 30px rgba(212, 168, 67, 0.1);
+            transition: all 0.1s linear;
+            position: relative;
+        }
+
+        .breathing-circle::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 168, 67, 0.15);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .breathing-circle::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 168, 67, 0.08);
+            animation: pulse 3s ease-in-out infinite 0.5s;
+        }
+
+        /* Triangle breathing */
+        .breathing-triangle-wrapper {
+            position: relative;
+            width: 200px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .breathing-triangle {
+            width: 0;
+            height: 0;
+            border-left: 90px solid transparent;
+            border-right: 90px solid transparent;
+            border-bottom: 160px solid rgba(184, 115, 51, 0.3);
+            transition: all 0.1s linear;
+            position: relative;
+            filter: drop-shadow(0 0 15px rgba(212, 168, 67, 0.2));
+        }
+
+        .breathing-triangle-border {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 93px solid transparent;
+            border-right: 93px solid transparent;
+            border-bottom: 166px solid rgba(212, 168, 67, 0.35);
+            top: -3px;
+            left: -3px;
+            z-index: -1;
+        }
+
+        /* Rectangle/Box breathing */
+        .breathing-rectangle {
+            width: 200px;
+            height: 150px;
+            background: rgba(184, 115, 51, 0.15);
+            border: 2px solid rgba(212, 168, 67, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(212, 168, 67, 0.15);
+            transition: all 0.1s linear;
+            position: relative;
+        }
+
+        .breathing-rectangle::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            right: -12px;
+            bottom: -12px;
+            border: 1px solid rgba(212, 168, 67, 0.15);
+            border-radius: 14px;
+        }
+
+        .breathing-rectangle::after {
+            content: '';
+            position: absolute;
+            top: -24px;
+            left: -24px;
+            right: -24px;
+            bottom: -24px;
+            border: 1px solid rgba(212, 168, 67, 0.06);
+            border-radius: 20px;
+        }
+
+        /* Glow effect during breathing */
+        .breathing-shape-container.glow .breathing-circle {
+            box-shadow: 0 0 60px rgba(255, 150, 50, 0.4), 0 0 100px rgba(255, 150, 50, 0.2);
+        }
+
+        .breathing-shape-container.glow .breathing-rectangle {
+            box-shadow: 0 0 60px rgba(255, 150, 50, 0.4), 0 0 100px rgba(255, 150, 50, 0.2);
+        }
+
+        .breathing-shape-container.glow .breathing-triangle-wrapper .breathing-triangle {
+            filter: drop-shadow(0 0 30px rgba(255, 150, 50, 0.4));
+        }
+
+        /* Breath instruction text */
+        .breath-instruction {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: var(--warm-gold);
+            text-align: center;
+            margin: 20px 0;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 0 30px rgba(212, 168, 67, 0.3);
+            transition: opacity 0.5s ease;
+        }
+
+        .breath-timer {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            color: rgba(232, 213, 181, 0.4);
+            letter-spacing: 0.2em;
+            margin-top: 10px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            background: linear-gradient(135deg, rgba(184, 115, 51, 0.3), rgba(184, 115, 51, 0.1));
+            border: 1px solid rgba(184, 115, 51, 0.4);
+            border-radius: 30px;
+            color: var(--warm-gold);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(184, 115, 51, 0.5), rgba(184, 115, 51, 0.2));
+            box-shadow: 0 0 30px rgba(212, 168, 67, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, rgba(212, 168, 67, 0.4), rgba(184, 115, 51, 0.3));
+            border-color: var(--warm-gold);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(212, 168, 67, 0.3), rgba(184, 115, 51, 0.2));
+            border-color: rgba(212, 168, 67, 0.5);
+        }
+
+        /* Rounds counter */
+        .rounds-info {
+            text-align: center;
+            margin-top: 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            color: rgba(232, 213, 181, 0.5);
+            letter-spacing: 0.1em;
+        }
+
+        /* Session info bar */
+        .session-info {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .session-stat {
+            text-align: center;
+        }
+
+        .session-stat .value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            color: var(--warm-gold);
+        }
+
+        .session-stat .label {
+            font-size: 0.7rem;
+            color: rgba(232, 213, 181, 0.4);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Ambient light effect */
+        .ambient-light {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(255, 120, 40, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes ambientPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Ember particles */
+        .ember {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 120, 40, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 3;
+            animation: emberFloat linear infinite;
+        }
+
+        @keyframes emberFloat {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2rem;
+                letter-spacing: 0.2em;
+            }
+
+            .breathing-area {
+                padding: 30px 16px;
+                min-height: 380px;
+            }
+
+            .breathing-shape-container {
+                width: 220px;
+                height: 220px;
+            }
+
+            .breath-instruction {
+                font-size: 1.5rem;
+            }
+
+            .exercises-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+
+            .shape-tabs {
+                gap: 8px;
+            }
+
+            .shape-tab {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Progress indicator for phases */
+        .phase-indicator {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .phase-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(212, 168, 67, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .phase-dot.active {
+            background: var(--warm-gold);
+            box-shadow: 0 0 10px rgba(212, 168, 67, 0.5);
+        }
+
+        /* Description panel */
+        .description-panel {
+            background: linear-gradient(135deg, rgba(42, 31, 26, 0.8), rgba(74, 55, 40, 0.8));
+            border: 1px solid rgba(184, 115, 51, 0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .description-panel .desc-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            color: var(--warm-gold);
+            margin-bottom: 8px;
+            letter-spacing: 0.1em;
+        }
+
+        .description-panel .desc-text {
+            font-size: 0.85rem;
+            color: rgba(232, 213, 181, 0.6);
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer p {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.85rem;
+            color: rgba(232, 213, 181, 0.3);
+            letter-spacing: 0.15em;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-light"></div>
+    <div class="steam-container" id="steamContainer"></div>
+
+    <header class="header">
+        <h1>Sauna Breath</h1>
+        <p class="subtitle">Breathe • Relax • Restore</p>
+    </header>
+
+    <div class="sauna-stones">
+        <div class="stone"></div>
+        <div class="stone"></div>
+        <div class="stone"></div>
+        <div class="stone"></div>
+        <div class="stone"></div>
+    </div>
+
+    <main class="main-container">
+        <!-- Exercise Selector -->
+        <section class="exercise-selector">
+            <h2>Choose Your Practice</h2>
+            <div class="shape-tabs">
+                <div class="shape-tab active" data-shape="circle" onclick="filterExercises('circle')">
+                    <svg class="shape-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    Circle
+                </div>
+                <div class="shape-tab" data-shape="triangle" onclick="filterExercises('triangle')">
+                    <svg class="shape-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polygon points="12,2 22,22 2,22"/>
+                    </svg>
+                    Triangle
+                </div>
+                <div class="shape-tab" data-shape="rectangle" onclick="filterExercises('rectangle')">
+                    <svg class="shape-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                    </svg>
+                    Rectangle
+                </div>
+            </div>
+            <div class="exercises-grid" id="exercisesGrid"></div>
+        </section>
+
+        <!-- Breathing Area -->
+        <section class="breathing-area" id="breathingArea">
+            <div class="breathing-shape-container" id="shapeContainer">
+                <div class="breathing-circle" id="breathingShape"></div>
+            </div>
+            <div class="breath-instruction" id="breathInstruction">Select an exercise</div>
+            <div class="breath-timer" id="breathTimer"></div>
+            <div class="phase-indicator" id="phaseIndicator"></div>
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="toggleBreathing()">Start</button>
+                <button class="btn" onclick="resetBreathing()">Reset</button>
+            </div>
+            <div class="rounds-info" id="roundsInfo"></div>
+            <div class="session-info">
+                <div class="session-stat">
+                    <div class="value" id="totalBreaths">0</div>
+                    <div class="label">Breaths</div>
+                </div>
+                <div class="session-stat">
+                    <div class="value" id="sessionTime">0:00</div>
+                    <div class="label">Time</div>
+                </div>
+            </div>
+            <div class="description-panel" id="descriptionPanel">
+                <div class="desc-name" id="descName"></div>
+                <div class="desc-text" id="descText">Select a breathing exercise above to begin your practice.</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Find your calm within the warmth</p>
+    </footer>
+
+    <script>
+        // Breathing exercises data
+        const exercises = {
+            circle: [
+                {
+                    name: "4-4 Balance",
+                    pattern: "4-4",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Exhale", duration: 4000, action: "exhale" }
+                    ],
+                    description: "A simple balanced breath. Inhale for 4 counts, exhale for 4 counts. Perfect for beginners and quick relaxation."
+                },
+                {
+                    name: "Coherent Breathing",
+                    pattern: "5-5",
+                    phases: [
+                        { name: "Inhale", duration: 5000, action: "inhale" },
+                        { name: "Exhale", duration: 5000, action: "exhale" }
+                    ],
+                    description: "Also known as resonant breathing. 5 seconds in, 5 seconds out creates coherence between heart and breath."
+                },
+                {
+                    name: "Extended Exhale",
+                    pattern: "4-6",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Exhale", duration: 6000, action: "exhale" }
+                    ],
+                    description: "Longer exhales activate the parasympathetic nervous system, promoting deep relaxation and calm."
+                },
+                {
+                    name: "Deep Calm",
+                    pattern: "4-8",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Exhale", duration: 8000, action: "exhale" }
+                    ],
+                    description: "Double exhale length creates profound relaxation. Excellent for stress relief and before sleep."
+                },
+                {
+                    name: "Gentle Wave",
+                    pattern: "3-5",
+                    phases: [
+                        { name: "Inhale", duration: 3000, action: "inhale" },
+                        { name: "Exhale", duration: 5000, action: "exhale" }
+                    ],
+                    description: "A gentle, accessible pattern. Short inhale, longer exhale. Ideal for those new to breathwork."
+                }
+            ],
+            triangle: [
+                {
+                    name: "4-4-4 Triangle",
+                    pattern: "4-4-4",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 4000, action: "hold" },
+                        { name: "Exhale", duration: 4000, action: "exhale" }
+                    ],
+                    description: "Equal parts inhale, hold, exhale. Creates balance and mental clarity. Great for focus and presence."
+                },
+                {
+                    name: "5-5-5 Balance",
+                    pattern: "5-5-5",
+                    phases: [
+                        { name: "Inhale", duration: 5000, action: "inhale" },
+                        { name: "Hold", duration: 5000, action: "hold" },
+                        { name: "Exhale", duration: 5000, action: "exhale" }
+                    ],
+                    description: "A deeper triangle breath. Each phase at 5 seconds builds lung capacity and calm focus."
+                },
+                {
+                    name: "Calming Triangle",
+                    pattern: "4-7-8",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 7000, action: "hold" },
+                        { name: "Exhale", duration: 8000, action: "exhale" }
+                    ],
+                    description: "Extended hold maximizes oxygen absorption. The longer retention builds inner stillness."
+                },
+                {
+                    name: "Energizing Triangle",
+                    pattern: "4-2-6",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 2000, action: "hold" },
+                        { name: "Exhale", duration: 6000, action: "exhale" }
+                    ],
+                    description: "Short hold with extended exhale. Balances energy while maintaining a calming effect."
+                },
+                {
+                    name: "Gentle Triangle",
+                    pattern: "3-3-3",
+                    phases: [
+                        { name: "Inhale", duration: 3000, action: "inhale" },
+                        { name: "Hold", duration: 3000, action: "hold" },
+                        { name: "Exhale", duration: 3000, action: "exhale" }
+                    ],
+                    description: "A softer triangle breath. Perfect for beginners or when you want a lighter practice."
+                }
+            ],
+            rectangle: [
+                {
+                    name: "Box Breathing",
+                    pattern: "4-4-4-4",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 4000, action: "hold" },
+                        { name: "Exhale", duration: 4000, action: "exhale" },
+                        { name: "Hold Empty", duration: 4000, action: "hold-empty" }
+                    ],
+                    description: "The classic box breath used by Navy SEALs. Four equal sides create stability and focus under pressure."
+                },
+                {
+                    name: "4-4-6-2 Box",
+                    pattern: "4-4-6-2",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 4000, action: "hold" },
+                        { name: "Exhale", duration: 6000, action: "exhale" },
+                        { name: "Hold Empty", duration: 2000, action: "hold-empty" }
+                    ],
+                    description: "Extended exhale with shorter empty hold. Deeply relaxing while maintaining alertness."
+                },
+                {
+                    name: "Deep Box",
+                    pattern: "5-5-5-5",
+                    phases: [
+                        { name: "Inhale", duration: 5000, action: "inhale" },
+                        { name: "Hold", duration: 5000, action: "hold" },
+                        { name: "Exhale", duration: 5000, action: "exhale" },
+                        { name: "Hold Empty", duration: 5000, action: "hold-empty" }
+                    ],
+                    description: "A deeper box breath. Each 5-second phase builds capacity and profound calm."
+                },
+                {
+                    name: "Restorative Box",
+                    pattern: "4-6-4-2",
+                    phases: [
+                        { name: "Inhale", duration: 4000, action: "inhale" },
+                        { name: "Hold", duration: 6000, action: "hold" },
+                        { name: "Exhale", duration: 4000, action: "exhale" },
+                        { name: "Hold Empty", duration: 2000, action: "hold-empty" }
+                    ],
+                    description: "Longer top hold for maximum oxygen absorption. Deeply restorative and centering."
+                },
+                {
+                    name: "Mini Box",
+                    pattern: "3-3-3-3",
+                    phases: [
+                        { name: "Inhale", duration: 3000, action: "inhale" },
+                        { name: "Hold", duration: 3000, action: "hold" },
+                        { name: "Exhale", duration: 3000, action: "exhale" },
+                        { name: "Hold Empty", duration: 3000, action: "hold-empty" }
+                    ],
+                    description: "A gentler box breath. Accessible for all levels, great for a quick reset."
+                }
+            ]
+        };
+
+        // State
+        let currentShape = 'circle';
+        let currentExercise = null;
+        let isBreathing = false;
+        let currentPhaseIndex = 0;
+        let currentRound = 0;
+        let totalBreathsCount = 0;
+        let sessionStartTime = null;
+        let sessionTimerInterval = null;
+        let breathTimeout = null;
+        let animationFrame = null;
+        let shapeStartTime = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createSteamParticles();
+            createEmberParticles();
+            filterExercises('circle');
+        });
+
+        function createSteamParticles() {
+            const container = document.getElementById('steamContainer');
+            for (let i = 0; i < 15; i++) {
+                const steam = document.createElement('div');
+                steam.className = 'steam';
+                steam.style.cssText = `
+                    width: ${80 + Math.random() * 120}px;
+                    height: ${80 + Math.random() * 120}px;
+                    left: ${Math.random() * 100}%;
+                    animation-duration: ${15 + Math.random() * 20}s;
+                    animation-delay: ${Math.random() * 15}s;
+                `;
+                container.appendChild(steam);
+            }
+        }
+
+        function createEmberParticles() {
+            for (let i = 0; i < 8; i++) {
+                const ember = document.createElement('div');
+                ember.className = 'ember';
+                ember.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    bottom: -10px;
+                    animation-duration: ${8 + Math.random() * 12}s;
+                    animation-delay: ${Math.random() * 10}s;
+                    width: ${2 + Math.random() * 3}px;
+                    height: ${2 + Math.random() * 3}px;
+                `;
+                document.body.appendChild(ember);
+            }
+        }
+
+        function filterExercises(shape) {
+            currentShape = shape;
+            
+            // Update tabs
+            document.querySelectorAll('.shape-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.shape === shape);
+            });
+
+            // Render exercises
+            const grid = document.getElementById('exercisesGrid');
+            grid.innerHTML = '';
+            
+            exercises[shape].forEach((exercise, index) => {
+                const card = document.createElement('div');
+                card.className = 'exercise-card';
+                card.innerHTML = `
+                    <div class="name">${exercise.name}</div>
+                    <div class="pattern">${exercise.pattern}</div>
+                `;
+                card.onclick = () => selectExercise(index);
+                grid.appendChild(card);
+            });
+
+            // Auto-select first exercise if none selected
+            if (!currentExercise || currentExercise.shape !== shape) {
+                selectExercise(0);
+            }
+        }
+
+        function selectExercise(index) {
+            if (isBreathing) {
+                stopBreathing();
+            }
+
+            currentExercise = { ...exercises[currentShape][index], shape: currentShape };
+            
+            // Update active card
+            document.querySelectorAll('.exercise-card').forEach((card, i) => {
+                card.classList.toggle('active', i === index);
+            });
+
+            // Update shape
+            updateShape();
+            
+            // Update description
+            document.getElementById('descName').textContent = currentExercise.name;
+            document.getElementById('descText').textContent = currentExercise.description;
+
+            // Reset
+            resetBreathing();
+        }
+
+        function updateShape() {
+            const container = document.getElementById('shapeContainer');
+            
+            switch (currentExercise.shape) {
+                case 'circle':
+                    container.innerHTML = '<div class="breathing-circle" id="breathingShape"></div>';
+                    break;
+                case 'triangle':
+                    container.innerHTML = `
+                        <div class="breathing-triangle-wrapper" id="breathingShape">
+                            <div class="breathing-triangle-border"></div>
+                            <div class="breathing-triangle"></div>
+                        </div>`;
+                    break;
+                case 'rectangle':
+                    container.innerHTML = '<div class="breathing-rectangle" id="breathingShape"></div>';
+                    break;
+            }
+            indicator.innerHTML = '';
+            currentExercise.phases.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'phase-dot';
+                indicator.appendChild(dot);
+            });
+        }
+
+        function toggleBreathing() {
+            if (isBreathing) {
+                stopBreathing();
+            } else {
+                startBreathing();
+            }
+        }
+
+        function startBreathing() {
+            if (!currentExercise) return;
+
+            isBreathing = true;
+            document.getElementById('startBtn').textContent = 'Pause';
+            document.getElementById('startBtn').classList.add('active');
+
+            if (!sessionStartTime) {
+                sessionStartTime = Date.now();
+                sessionTimerInterval = setInterval(updateSessionTimer, 100);
+            }
+
+            currentPhaseIndex = 0;
+            runPhase();
+        }
+
+        function stopBreathing() {
+            isBreathing = false;
+            document.getElementById('startBtn').textContent = 'Resume';
+            document.getElementById('startBtn').classList.remove('active');
+            
+            if (breathTimeout) {
+                clearTimeout(breathTimeout);
+                breathTimeout = null;
+            }
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+        }
+
+        function resetBreathing() {
+            stopBreathing();
+            document.getElementById('startBtn').textContent = 'Start';
+            currentPhaseIndex = 0;
+            currentRound = 0;
+            totalBreathsCount = 0;
+            sessionStartTime = null;
+            
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+            }
+
+            document.getElementById('totalBreaths').textContent = '0';
+            document.getElementById('sessionTime').textContent = '0:00';
+            document.getElementById('roundsInfo').textContent = '';
+            document.getElementById('breathInstruction').textContent = currentExercise ? 'Ready to begin' : 'Select an exercise';
+            document.getElementById('breathTimer').textContent = '';
+
+            // Reset shape
+            const shape = document.getElementById('breathingShape');
+            if (shape) {
+                if (currentExercise && currentExercise.shape === 'circle') {
+                    shape.style.transform = 'scale(0.6)';
+                    shape.style.opacity = '0.5';
+                } else if (currentExercise && currentExercise.shape === 'triangle') {
+                    shape.style.transform = 'scale(0.6)';
+                    shape.style.opacity = '0.5';
+                } else if (currentExercise && currentExercise.shape === 'rectangle') {
+                    shape.style.transform = 'scale(0.6)';
+                    shape.style.opacity = '0.5';
+                }
+            }
+
+            // Reset phase indicator
+            document.querySelectorAll('.phase-dot').forEach(dot => dot.classList.remove('active'));
+            document.getElementById('shapeContainer').classList.remove('glow');
+        }
+
+        function runPhase() {
+            if (!isBreathing || !currentExercise) return;
+
+            const phase = currentExercise.phases[currentPhaseIndex];
+            const shape = document.getElementById('breathingShape');
+            
+            if (!shape) return;
+
+            // Update instruction
+            document.getElementById('breathInstruction').textContent = phase.name;
+            
+            // Update phase indicator
+            document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentPhaseIndex);
+            });
+
+            // Record start time for accurate timing
+            const phaseStartTime = performance.now();
+            shapeStartTime = phaseStartTime;
+            
+            // Start animation
+            animatePhase(phase, shape);
+
+            // Update timer display using requestAnimationFrame for smooth updates
+            function updateTimer() {
+                if (!isBreathing) return;
+                
+                const elapsed = performance.now() - phaseStartTime;
+                const remaining = Math.max(0, phase.duration - elapsed);
+                document.getElementById('breathTimer').textContent = (remaining / 1000).toFixed(1) + 's';
+                
+                if (remaining > 0) {
+                    requestAnimationFrame(updateTimer);
+                }
+            }
+            requestAnimationFrame(updateTimer);
+
+            // Schedule next phase
+            breathTimeout = setTimeout(() => {
+                document.getElementById('breathTimer').textContent = '';
+                
+                // Count breath
+                if (phase.action === 'exhale') {
+                    totalBreathsCount++;
+                    document.getElementById('totalBreaths').textContent = totalBreathsCount;
+                }
+
+                // Move to next phase
+                currentPhaseIndex++;
+                if (currentPhaseIndex >= currentExercise.phases.length) {
+                    currentPhaseIndex = 0;
+                    currentRound++;
+                    document.getElementById('roundsInfo').textContent = `Round ${currentRound + 1}`;
+                }
+
+                runPhase();
+            }, phase.duration);
+        }
+
+        function animatePhase(phase, shape) {
+            const duration = phase.duration;
+            const startTime = performance.now();
+
+            function animate() {
+                if (!isBreathing) return;
+
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease in-out
+                const eased = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+                switch (phase.action) {
+                    case 'inhale':
+                        // Expand
+                        if (currentExercise.shape === 'circle') {
+                            const scale = 0.6 + (eased * 0.8);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 0.5 + (eased * 0.5);
+                        } else if (currentExercise.shape === 'triangle') {
+                            const scale = 0.5 + (eased * 0.7);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 0.5 + (eased * 0.5);
+                        } else if (currentExercise.shape === 'rectangle') {
+                            const scale = 0.6 + (eased * 0.6);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 0.5 + (eased * 0.5);
+                        }
+                        document.getElementById('shapeContainer').classList.add('glow');
+                        break;
+
+                    case 'exhale':
+                        // Contract
+                        if (currentExercise.shape === 'circle') {
+                            const scale = 1.4 - (eased * 0.8);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 1 - (eased * 0.5);
+                        } else if (currentExercise.shape === 'triangle') {
+                            const scale = 1.2 - (eased * 0.7);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 1 - (eased * 0.5);
+                        } else if (currentExercise.shape === 'rectangle') {
+                            const scale = 1.2 - (eased * 0.6);
+                            shape.style.transform = `scale(${scale})`;
+                            shape.style.opacity = 1 - (eased * 0.5);
+                        }
+                        document.getElementById('shapeContainer').classList.remove('glow');
+                        break;
+
+                    case 'hold':
+                        // Stay expanded, gentle pulse
+                        if (currentExercise.shape === 'circle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${1.4 * pulse})`;
+                            shape.style.opacity = '1';
+                        } else if (currentExercise.shape === 'triangle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${1.2 * pulse})`;
+                            shape.style.opacity = '1';
+                        } else if (currentExercise.shape === 'rectangle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${1.2 * pulse})`;
+                            shape.style.opacity = '1';
+                        }
+                        document.getElementById('shapeContainer').classList.add('glow');
+                        break;
+
+                    case 'hold-empty':
+                        // Stay contracted, gentle pulse
+                        if (currentExercise.shape === 'circle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${0.6 * pulse})`;
+                            shape.style.opacity = '0.5';
+                        } else if (currentExercise.shape === 'triangle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${0.5 * pulse})`;
+                            shape.style.opacity = '0.5';
+                        } else if (currentExercise.shape === 'rectangle') {
+                            const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.02;
+                            shape.style.transform = `scale(${0.6 * pulse})`;
+                            shape.style.opacity = '0.5';
+                        }
+                        document.getElementById('shapeContainer').classList.remove('glow');
+                        break;
+                }
+
+                if (progress < 1 && isBreathing) {
+                    animationFrame = requestAnimationFrame(animate);
+                }
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        function updateSessionTimer() {
+            if (!sessionStartTime) return;
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('sessionTime').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>
