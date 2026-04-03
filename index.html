@@ -100,6 +100,69 @@
             }
         }
 
+        /* Music toggle button */
+        .music-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(42, 31, 26, 0.9), rgba(74, 55, 40, 0.9));
+            border: 1px solid rgba(184, 115, 51, 0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .music-toggle:hover {
+            border-color: var(--warm-gold);
+            background: linear-gradient(135deg, rgba(184, 115, 51, 0.4), rgba(184, 115, 51, 0.2));
+            box-shadow: 0 0 20px rgba(212, 168, 67, 0.2);
+            transform: scale(1.05);
+        }
+
+        .music-toggle.active {
+            border-color: var(--warm-gold);
+            box-shadow: 0 0 25px rgba(212, 168, 67, 0.3);
+        }
+
+        .music-toggle svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: var(--warm-gold);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .music-toggle .slash {
+            display: block;
+        }
+
+        .music-toggle.active .slash {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .music-toggle {
+                top: 12px;
+                right: 12px;
+                width: 42px;
+                height: 42px;
+            }
+
+            .music-toggle svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
         /* Header */
         .header {
             text-align: center;
@@ -658,6 +721,21 @@
     </style>
 </head>
 <body>
+    <!-- Music toggle button -->
+    <button class="music-toggle" id="musicToggle" onclick="toggleMusic()" aria-label="Toggle music">
+        <svg viewBox="0 0 24 24">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+            <line class="slash" x1="3" y1="3" x2="21" y2="21"/>
+        </svg>
+    </button>
+    
+    <!-- Background music -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="Meditation.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="ambient-light"></div>
     <div class="steam-container" id="steamContainer"></div>
 
@@ -908,6 +986,22 @@
         let breathTimeout = null;
         let animationFrame = null;
         let shapeStartTime = 0;
+        let isMusicPlaying = false;
+
+        // Music toggle function
+        function toggleMusic() {
+            const audio = document.getElementById('bgMusic');
+            const btn = document.getElementById('musicToggle');
+            
+            if (isMusicPlaying) {
+                audio.pause();
+                btn.classList.remove('active');
+            } else {
+                audio.play();
+                btn.classList.add('active');
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
